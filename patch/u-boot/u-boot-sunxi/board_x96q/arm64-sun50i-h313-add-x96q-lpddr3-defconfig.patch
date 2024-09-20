@@ -13,7 +13,7 @@ diff --git a/configs/x96q_lpddr3_defconfig b/configs/x96q_lpddr3_defconfig
 + new file mode 100755
 + index 000000000..306157b84
 +++ b/configs/x96q_lpddr3_defconfig
-@@ -0,0 +1,31 @@
+@@ -0,0 +1,34 @@
 +CONFIG_ARM=y
 +CONFIG_ARCH_SUNXI=y
 +CONFIG_DEFAULT_DEVICE_TREE="sun50i-h313-x96q-lpddr3"
@@ -45,12 +45,15 @@ diff --git a/configs/x96q_lpddr3_defconfig b/configs/x96q_lpddr3_defconfig
 +CONFIG_USB_EHCI_HCD=y
 +CONFIG_USB_OHCI_HCD=y
 +CONFIG_USB_MUSB_GADGET=y
++CONFIG_SUPPORT_EMMC_BOOT=y
++CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR=0x40
++CONFIG_MMC_SUNXI_SLOT_EXTRA=2
 diff --git a/arch/arm/dts/sun50i-h313-x96q-lpddr3.dts b/arch/arm/dts/sun50i-h313-x96q-lpddr3.dts
 new file mode 100644
 index 000000000..306157b84
 --- /dev/null
 +++ b/arch/arm/dts/sun50i-h313-x96q-lpddr3.dts
-@@ -0,0 +1,162 @@
+@@ -0,0 +1,191 @@
 +// SPDX-License-Identifier: (GPL-2.0+ or MIT)
 +/*
 + * Author: piotr.oniszczuk@gmail.com
@@ -65,7 +68,7 @@ index 000000000..306157b84
 +#include <dt-bindings/leds/common.h>
 +
 +/ {
-+	model = "hechuang,x96q LPDDR3";
++	model = "hechuang,x96-q LPDDR3 v1.3";
 +	compatible = "hechuang,x96-q", "allwinner,sun50i-h616";
 +
 +	aliases {
@@ -73,6 +76,7 @@ index 000000000..306157b84
 +		mmc1 = &mmc1;
 +		mmc2 = &mmc2;
 +		ethernet0 = &emac1;
++		ethernet1 = &wlan;
 +		serial0 = &uart0;
 +	};
 +
@@ -98,6 +102,25 @@ index 000000000..306157b84
 +		regulator-min-microvolt = <5000000>;
 +		regulator-max-microvolt = <5000000>;
 +		regulator-always-on;
++	};
++
++	reg_vcc_wifi: reg_vcc_wifi {
++		compatible = "regulator-fixed";
++		regulator-name = "vcc-wifi";
++		regulator-min-microvolt = <3300000>;
++		regulator-max-microvolt = <3300000>;
++		gpio = <&pio 6 18 GPIO_ACTIVE_HIGH>; /* PG18 WL_REG_ON */
++		regulator-always-on;
++		enable-active-high;
++		status = "okay";
++	};
++
++	wifi_pwrseq: wifi_pwrseq {
++		compatible = "mmc-pwrseq-simple";
++		clocks = <&rtc CLK_OSC32K_FANOUT>;
++		clock-names = "ext_clock";
++		pinctrl-names = "default";
++		//pinctrl-0 = <&clk_losc>; /* PG10 with MUX3 set */ - not implemented yet in uboot
 +	};
 +};
 +
@@ -133,9 +156,9 @@ index 000000000..306157b84
 +};
 +
 +&mdio1 {
-+	rmii_phy: ethernet-phy@0 {
++	rmii_phy: ethernet-phy@16 {
 +		compatible = "ethernet-phy-ieee802.3-c22";
-+		reg = <0>;
++		reg = <16>;
 +	};
 +};
 +
@@ -148,9 +171,18 @@ index 000000000..306157b84
 +
 +&mmc1 {
 +	vmmc-supply = <&reg_dldo2>;
-+	broken-cd;
++	vqmmc-supply = <&reg_vcc_wifi>;
++	mmc-pwrseq = <&wifi_pwrseq>;
 +	bus-width = <4>;
++	non-removable;
 +	status = "okay";
++
++	wlan: wifi@1 {
++		reg = <1>;
++		interrupt-parent = <&pio>;
++		interrupts = <6 15 IRQ_TYPE_EDGE_RISING>; /* PG15 WL_HOSTWAKE*/
++		interrupt-names = "host-wake";
++	};
 +};
 +
 +&mmc2 {
