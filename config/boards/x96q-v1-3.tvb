@@ -1,5 +1,5 @@
 # Allwinner H313 TVBox with 2GB of RAM and EMMC
-BOARD_NAME="X96Q TV Box"
+BOARD_NAME="X96Q v1.3 TV Box"
 BOARDFAMILY="sun50iw9"
 BOARD_MAINTAINER="sicXnull"
 BOOTCONFIG="x96q_lpddr3_defconfig"
