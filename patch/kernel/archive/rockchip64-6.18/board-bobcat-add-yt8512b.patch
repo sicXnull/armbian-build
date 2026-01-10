@@ -43,8 +43,8 @@
  /* Extended register is different from MMD Register and MII Register.
   * We can use ytphy_read_ext/ytphy_write_ext/ytphy_modify_ext function to
   * operate extended register.
-@@ -891,6 +920,100 @@ static int yt8511_resume(struct phy_device *phydev)
- 	return 0;
+@@ -748,6 +777,100 @@ err_restore_page:
+ 	return phy_restore_page(phydev, oldpage, ret);
  }
  
 +static int yt8512_config_init(struct phy_device *phydev)
@@ -144,7 +144,7 @@
  /**
   * yt8521_probe() - read chip config then set suitable polling_mode
   * @phydev: a pointer to a &struct phy_device
-@@ -2905,6 +3028,15 @@ static struct phy_driver motorcomm_phy_drvs[] = {
+@@ -3011,6 +3134,15 @@ static struct phy_driver motorcomm_phy_drvs[] = {
  		.write_page	= yt8511_write_page,
  	},
  	{
@@ -160,9 +160,9 @@
  		PHY_ID_MATCH_EXACT(PHY_ID_YT8521),
  		.name		= "YT8521 Gigabit Ethernet",
  		.get_features	= yt8521_get_features,
-@@ -2978,6 +3110,7 @@ module_phy_driver(motorcomm_phy_drvs);
+@@ -3095,6 +3227,7 @@ module_phy_driver(motorcomm_phy_drvs);
  
- static struct mdio_device_id __maybe_unused motorcomm_tbl[] = {
+ static const struct mdio_device_id __maybe_unused motorcomm_tbl[] = {
  	{ PHY_ID_MATCH_EXACT(PHY_ID_YT8511) },
 +	{ PHY_ID_MATCH_EXACT(PHY_ID_YT8512B) },
  	{ PHY_ID_MATCH_EXACT(PHY_ID_YT8521) },
