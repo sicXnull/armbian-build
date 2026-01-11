@@ -1,0 +1,44 @@
+/dts-v1/;
+
+/ {
+	compatible = "x96q,ba301", "allwinner,h616";
+	model = "X96Q BA301";
+
+	chosen {
+		bootargs = "earlyprintk=sunxi-uart,0x05000000 console=ttyS0,115200 loglevel=8";
+	};
+
+	pmu: pmu@36 {
+		compatible = "x-powers,axp806";
+		reg = <0x36>;
+
+		standby_param {
+			vcc-dram = <0x08>;
+		};
+
+		regulators {
+			dcdca: dcdca { regulator-name = "axp806-dcdca"; regulator-min-microvolt = <0x927c0>; regulator-max-microvolt = <0x173180>; regulator-always-on; };
+			dcdcb: dcdcb { regulator-name = "axp806-dcdcb"; regulator-min-microvolt = <0xf4240>; regulator-max-microvolt = <0x26e8f0>; };
+			/* More regulators can be added when required */
+		};
+	};
+
+	uart0: serial@05000000 {
+		compatible = "allwinner,sun50i-uart";
+		reg = <0x05 0x00000000 0x00 0x05000000>;
+		status = "okay";
+	};
+
+	&mmc1 {
+		status = "okay";
+		/* SD card pins: PG0..PG5 */
+	};
+
+	&eth {
+		status = "okay";
+	};
+
+	&hdmi {
+		status = "okay";
+	};
+};

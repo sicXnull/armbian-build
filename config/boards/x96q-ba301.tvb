@@ -1,0 +1,20 @@
+# X96Q BA301 board config for Armbian build
+# Minimal board config; please review before committing
+BOARD_NAME="X96Q BA301"
+BOARD_VENDOR="allwinner"
+BOARDFAMILY="sun50iw9"
+BOARD_MAINTAINER="stoka sicXnull"
+BOOTCONFIG="x96q_lpddr3_defconfig"
+BOOT_LOGO="desktop"
+KERNEL_TARGET="current"
+KERNEL_TEST_TARGET="current"
+FORCE_BOOTSCRIPT_UPDATE="yes"
+OVERLAY_PREFIX="sun50i-h616"
+# Default overlays (adjust as needed): enable SD card (sdc1) and uart1
+DEFAULT_OVERLAYS="sdc1 uart1"
+
+# Notes:
+# - This is a starting point for BA301 (X96Q variant). It references a
+#   device tree file to be added under patch/dt/sun50i-h616/ or to the kernel
+#   DTB tree if upstreamed.
+# - After applying, run ./compile.sh BOARD=x96q-ba301 RELEASE=bookworm BRANCH=current BUILD_MINIMAL=yes
