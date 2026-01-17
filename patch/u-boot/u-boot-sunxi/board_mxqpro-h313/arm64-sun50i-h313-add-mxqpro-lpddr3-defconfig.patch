@@ -1,24 +1,22 @@
 diff --git a/arch/arm/dts/Makefile b/arch/arm/dts/Makefile
-index c16b6471..7ffe8958 100644
 --- a/arch/arm/dts/Makefile
 +++ b/arch/arm/dts/Makefile
-@@ -836,6 +836,7 @@ dtb-$(CONFIG_MACH_SUN50I_H6) += \
+@@ -836,6 +836,7 @@
  dtb-$(CONFIG_MACH_SUN50I_H616) += \
  	sun50i-h616-orangepi-zero2.dtb \
  	sun50i-h618-orangepi-zero3.dtb \
-+	sun50i-h313-x96q_lpddr3.dtb \
++	sun50i-h313-mxqpro-lpddr3.dtb \
  	sun50i-h616-x96-mate.dtb
- dtb-$(CONFIG_MACH_SUN50I) += \
- 	sun50i-a64-amarula-relic.dtb \
+ 	
  
-diff --git a/configs/x96q_lpddr3_defconfig b/configs/x96q_lpddr3_defconfig
+diff --git a/configs/mxqpro_lpddr3_defconfig b/configs/mxqpro_lpddr3_defconfig
 + new file mode 100755
 + index 000000000..306157b84
-+++ b/configs/x96q_lpddr3_defconfig
++++ b/configs/mxqpro_lpddr3_defconfig
 @@ -0,0 +1,31 @@
 +CONFIG_ARM=y
 +CONFIG_ARCH_SUNXI=y
-+CONFIG_DEFAULT_DEVICE_TREE="sun50i-h313-x96q-lpddr3"
++CONFIG_DEFAULT_DEVICE_TREE="sun50i-h313-mxqpro-lpddr3"
 +CONFIG_SPL=y
 +CONFIG_SUNXI_DRAM_H616_LPDDR3=y
 +CONFIG_DRAM_CLK=600
@@ -47,11 +45,11 @@ diff --git a/configs/x96q_lpddr3_defconfig b/configs/x96q_lpddr3_defconfig
 +CONFIG_USB_EHCI_HCD=y
 +CONFIG_USB_OHCI_HCD=y
 +CONFIG_USB_MUSB_GADGET=y
-diff --git a/arch/arm/dts/sun50i-h313-x96q-lpddr3.dts b/arch/arm/dts/sun50i-h313-x96q-lpddr3.dts
+diff --git a/arch/arm/dts/sun50i-h313-mxqpro-lpddr3.dts b/arch/arm/dts/sun50i-h313-mxqpro-lpddr3.dts
 new file mode 100644
 index 000000000..306157b84
 --- /dev/null
-+++ b/arch/arm/dts/sun50i-h313-x96q-lpddr3.dts
++++ b/arch/arm/dts/sun50i-h313-mxqpro-lpddr3.dts
 @@ -0,0 +1,162 @@
 +// SPDX-License-Identifier: (GPL-2.0+ or MIT)
 +/*
@@ -67,7 +65,7 @@ index 000000000..306157b84
 +#include <dt-bindings/leds/common.h>
 +
 +/ {
-+	model = "hechuang,x96q LPDDR3";
++	model = "hechuang,mxqpro LPDDR3";
 +	compatible = "hechuang,x96-q", "allwinner,sun50i-h616";
 +
 +	aliases {
