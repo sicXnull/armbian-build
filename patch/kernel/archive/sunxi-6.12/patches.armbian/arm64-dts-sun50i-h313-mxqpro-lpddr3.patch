@@ -10,8 +10,8 @@ Signed-off-by: The-going <48602507+The-going@users.noreply.github.com>
 ---
  arch/arm64/boot/dts/allwinner/Makefile                    |   1 +
  arch/arm64/boot/dts/allwinner/sun50i-h313-cpu-opp.dtsi    |  92 +++
- arch/arm64/boot/dts/allwinner/sun50i-h313-mxqpro-lpddr3.dts | 307 ++++++++++
- 3 files changed, 400 insertions(+)
+ arch/arm64/boot/dts/allwinner/sun50i-h313-mxqpro-lpddr3.dts | 336 ++++++++++
+ 3 files changed, 429 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/allwinner/Makefile b/arch/arm64/boot/dts/allwinner/Makefile
 index 00bed412e..b41f031bb 100644
@@ -128,7 +128,7 @@ new file mode 100644
 index 000000000000..111111111111
 --- /dev/null
 +++ b/arch/arm64/boot/dts/allwinner/sun50i-h313-mxqpro-lpddr3.dts
-@@ -0,0 +1,307 @@
+@@ -0,0 +1,336 @@
 +// SPDX-License-Identifier: (GPL-2.0+ or MIT)
 +/*
 + * Author: piotr.oniszczuk@gmail.com
@@ -214,8 +214,33 @@ index 000000000000..111111111111
 +		compatible = "mmc-pwrseq-simple";
 +		clocks = <&rtc 1>;
 +		clock-names = "osc32k-out";
-+		reset-gpios = <&pio 6 18 GPIO_ACTIVE_LOW>; /* PG18 */
++		/* Drive PG18 (wlan_regon) high at host probe so card is powered when host scans */
++		reset-gpios = <&pio 6 18 GPIO_ACTIVE_LOW>; /* PG18 = enable, deassert = high */
 +		post-power-on-delay-ms = <200>;
++	};
++
++	/* Unisoc UWE5622 / Marlin3 WiFi+BT (sdiohal + marlin driver) */
++	uwe_bsp: uwe-bsp {
++		compatible = "unisoc,uwe_bsp";
++		wl-reg-on = <&pio 6 18 GPIO_ACTIVE_HIGH>; /* PG18 WLAN enable */
++		bt-reg-on = <&pio 6 19 GPIO_ACTIVE_HIGH>; /* PG19 BT reset-n */
++		wl-wake-host-gpio = <&pio 6 15 GPIO_ACTIVE_HIGH>; /* PG15 wlan_hostwake */
++		bt-wake-host;
++		bt-wake-host-gpio = <&pio 6 16 GPIO_ACTIVE_HIGH>; /* PG16 bt_hostwake */
++		sdio-ext-int-gpio = <&pio 6 15 GPIO_ACTIVE_HIGH>; /* PG15 SDIO OOB IRQ */
++		int-gpio = <&pio 6 15 GPIO_ACTIVE_HIGH>; /* PG15 for sdiohal */
++		data-irq;
++		adma-tx;
++		adma-rx;
++		sdhci-name = <&mmc1>;
++		unisoc,btwf-file-name = "/lib/firmware/wcnmodem.bin";
++		keep-power-on;
++	};
++
++	/* Required by UWE5622 marlin driver for bt_hostwake (CONFIG_AW_BOARD) */
++	btlpm: btlpm {
++		compatible = "allwinner,sunxi-btlpm";
++		bt_hostwake = <&pio 6 16 GPIO_ACTIVE_HIGH>; /* PG16 */
 +	};
 +};
 +
@@ -287,8 +312,8 @@ index 000000000000..111111111111
 +
 +&mmc1 {
 +	vmmc-supply = <&reg_dldo1>;
-+	vqmmc-supply = <&reg_vcc_wifi>;
-+	mmc-pwrseq = <&wifi_pwrseq>;
++	vqmmc-supply = <&reg_aldo1>; /* 1.8V SDIO IO (sdio-used-1v8 in original DTS) */
++	mmc-pwrseq = <&wifi_pwrseq>; /* PG18 enable at probe so card is powered on first scan */
 +	bus-width = <4>;
 +	non-removable;
 +	cap-sd-highspeed;
@@ -296,12 +321,14 @@ index 000000000000..111111111111
 +	keep-power-in-suspend;
 +	status = "okay";
 +
++	/* Disabled: UWE5622/marlin stack drives WiFi via uwe-bsp, not mainline unisoc_wifi */
 +	wlan: wifi@1 {
++		status = "disabled";
 +		compatible = "sprd,sc2355-wifi";
 +		reg = <1>;
-+		sprd,power-gpios = <&pio 6 18 GPIO_ACTIVE_HIGH>;
++		sprd,power-gpios = <&pio 6 18 GPIO_ACTIVE_HIGH>; /* PG18 WLAN enable (wlan_regon) */
 +		interrupt-parent = <&pio>;
-+		interrupts = <6 15 IRQ_TYPE_LEVEL_HIGH>; /* PG15 WL_HOSTWAKE */
++		interrupts = <6 15 IRQ_TYPE_LEVEL_HIGH>; /* PG15 wlan_hostwake */
 +		interrupt-names = "host-wake";
 +	};
 +};
@@ -392,15 +419,17 @@ index 000000000000..111111111111
 +	uart-has-rtscts;
 +	status = "okay";
 +
++	/* BCM HCI UART disabled: this board uses Spreadtrum Marlin3 BT via uwe-bsp/mtty */
 +	bluetooth {
 +		compatible = "brcm,bcm43438-bt";
++		status = "disabled";
 +		clocks = <&rtc 1>;
 +		clock-names = "lpo";
 +		vbat-supply = <&reg_dldo1>;
 +		vddio-supply = <&reg_dldo1>;
-+		device-wakeup-gpios = <&r_pio 0 6 GPIO_ACTIVE_HIGH>; /* PL6 */
-+		host-wakeup-gpios = <&r_pio 0 5 GPIO_ACTIVE_HIGH>; /* PL5 */
-+		shutdown-gpios = <&r_pio 0 4 GPIO_ACTIVE_HIGH>; /* PL4 */
++		device-wakeup-gpios = <&pio 6 17 GPIO_ACTIVE_HIGH>; /* PG17 bt_wake */
++		host-wakeup-gpios = <&pio 6 16 GPIO_ACTIVE_HIGH>; /* PG16 bt_hostwake */
++		shutdown-gpios = <&pio 6 19 GPIO_ACTIVE_HIGH>; /* PG19 bt_rst_n (sprd-marlin3) */
 +	};
 +};
 +
@@ -436,3 +465,7 @@ index 000000000000..111111111111
 +&ahub1_mach {
 +	status = "okay";
 +};
+
+-- 
+Armbian
+
