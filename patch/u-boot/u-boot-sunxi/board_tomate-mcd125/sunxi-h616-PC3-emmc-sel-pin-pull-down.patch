@@ -1,0 +1,40 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Juliano <author@example.com>
+Date: Wed, 18 Mar 2026 12:00:00 +0000
+Subject: [PATCH] sunxi: H616/H313: set PC3 eMMC sel pin to pull-down for SPL boot
+
+PC3 is the eMMC selection pin on H616/H313 (sun50iw9). It must be
+configured as INPUT with PULL_DOWN for the SPL to successfully initialize
+and boot from eMMC (MMC2 / SLOT_EXTRA).
+
+Without this, the BROM loads the SPL from the eMMC TOC0 successfully
+(since BROM has its own hardcoded MMC init), but when the SPL tries to
+re-initialize MMC2 via sunxi_mmc_init()/mmc_resource_init(), the eMMC
+does not respond and the device is never registered, resulting in:
+
+  MMC Device 1 not found
+  spl: could not find mmc device 1. error: -19
+
+Note: the DTS pinctrl-0 entry has no effect in SPL — pin configuration
+must be done explicitly in mmc_pinmux_setup().
+
+Ported from board_bigtreetech-cb1 patches (Alan, 2023-05-19) to
+Tomate MCD-125 (Allwinner H313).
+---
+ board/sunxi/board.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/board/sunxi/board.c b/board/sunxi/board.c
+--- a/board/sunxi/board.c
++++ b/board/sunxi/board.c
+@@ -461,6 +461,10 @@ static void mmc_pinmux_setup(int sdc)
+ 			sunxi_gpio_set_cfgpin(pin, SUNXI_GPC_SDC2);
+ 			sunxi_gpio_set_pull(pin, SUNXI_GPIO_PULL_UP);
+ 			sunxi_gpio_set_drv(pin, 3);
+ 		}
++		/* PC3 eMMC sel pin set to pull down mode for boot from eMMC */
++		sunxi_gpio_set_cfgpin(SUNXI_GPC(3), SUNXI_GPIO_INPUT);
++		sunxi_gpio_set_pull(SUNXI_GPC(3), SUNXI_GPIO_PULL_DOWN);
++		sunxi_gpio_set_drv(SUNXI_GPC(3), 3);
+ #elif defined(CONFIG_MACH_SUN9I)
+ 		/* SDC2: PC6-PC16 */

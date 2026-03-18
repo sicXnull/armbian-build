@@ -1,0 +1,12 @@
+# Tomate MCD-125 TV Box — Allwinner H313, LPDDR3 2GB, eMMC 16GB
+# SSV6558 WiFi/BT chip present but not yet supported (future phase)
+BOARD_NAME="Tomate MCD-125"
+BOARD_VENDOR="tomate"
+BOARDFAMILY="sun50iw9"
+BOARD_MAINTAINER="julivs"
+BOOTCONFIG="tomate_mcd125_lpddr3_defconfig"
+BOOT_LOGO="desktop"
+KERNEL_TARGET="current"
+KERNEL_TEST_TARGET="current"
+FORCE_BOOTSCRIPT_UPDATE="yes"
+OVERLAY_PREFIX="sun50i-h616"

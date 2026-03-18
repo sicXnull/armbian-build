@@ -1,0 +1,305 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Armbian
+Date: Thu, 13 Mar 2025 00:00:00 +0000
+Subject: arm64: dts: sun50i-h313-tomate-mcd125
+
+Add support for Tomate MCD-125 TV Box
+Allwinner H313 (sun50iw9p1), LPDDR3 2GB, Samsung eMMC 16GB (KMQ820013M)
+AXP313A PMIC, 100Mbps RMII internal PHY, SSV6558 WiFi/BT (future)
+
+---
+ arch/arm64/boot/dts/allwinner/Makefile                          |   1 +
+ arch/arm64/boot/dts/allwinner/sun50i-h313-tomate-mcd125.dts     | 262 ++++++++++
+ 2 files changed, 263 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/allwinner/Makefile b/arch/arm64/boot/dts/allwinner/Makefile
+index b41f031bb..c2e1a9abc 100644
+--- a/arch/arm64/boot/dts/allwinner/Makefile
++++ b/arch/arm64/boot/dts/allwinner/Makefile
+@@ -39,6 +39,7 @@ dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h6-pine-h64.dtb
+ dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h6-pine-h64-model-b.dtb
+ dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h6-tanix-tx6.dtb
+ dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h6-tanix-tx6-mini.dtb
++dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h313-tomate-mcd125.dtb
+ dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h313-mxqpro-lpddr3.dtb
+ dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h313-tanix-tx1.dtb
+ dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h616-bigtreetech-cb1-manta.dtb
+diff --git a/arch/arm64/boot/dts/allwinner/sun50i-h313-tomate-mcd125.dts b/arch/arm64/boot/dts/allwinner/sun50i-h313-tomate-mcd125.dts
+new file mode 100644
+index 000000000000..111111111111
+--- /dev/null
++++ b/arch/arm64/boot/dts/allwinner/sun50i-h313-tomate-mcd125.dts
+@@ -0,0 +1,269 @@
++// SPDX-License-Identifier: (GPL-2.0+ or MIT)
++/*
++ * Device tree for Tomate MCD-125 TV Box
++ * SoC:     Allwinner H313 (sun50iw9p1), Cortex-A53 quad-core
++ * RAM:     Samsung KMQ820013M eMCP — LPDDR3 2GB
++ * Storage: Samsung KMQ820013M eMCP — eMMC 16GB
++ * PMIC:    AXP313A (= AXP1530) on r_i2c (I2C5), address 0x36
++ * ETH:     GMAC1 RMII internal PHY, 100 Mbps
++ * WiFi/BT: SSV6558 on SDIO (PG0-PG5) — future support
++ * PCB:     GYS_A7_V3.1
++ */
++
++/dts-v1/;
++
++#include "sun50i-h616.dtsi"
++#include "sun50i-h313-cpu-opp.dtsi"
++#include <dt-bindings/gpio/gpio.h>
++#include <dt-bindings/interrupt-controller/arm-gic.h>
++#include <dt-bindings/leds/common.h>
++
++/ {
++	model = "Tomate MCD-125";
++	compatible = "tomate,mcd-125", "allwinner,sun50i-h616";
++
++	aliases {
++		mmc0 = &mmc0;
++		mmc1 = &mmc1;
++		mmc2 = &mmc2;
++		ethernet0 = &emac1;
++		serial0 = &uart0;
++	};
++
++	chosen {
++		stdout-path = "serial0:115200n8";
++	};
++
++	connector {
++		compatible = "hdmi-connector";
++		type = "d";
++
++		port {
++			hdmi_con_in: endpoint {
++				remote-endpoint = <&hdmi_out_con>;
++			};
++		};
++	};
++
++	reg_vcc5v: vcc5v {
++		/* board wide 5V supply */
++		compatible = "regulator-fixed";
++		regulator-name = "vcc-5v";
++		regulator-min-microvolt = <5000000>;
++		regulator-max-microvolt = <5000000>;
++		regulator-always-on;
++	};
++
++	reg_usb1_vbus: usb1-vbus {
++		compatible = "regulator-fixed";
++		regulator-name = "usb1-vbus";
++		regulator-min-microvolt = <5000000>;
++		regulator-max-microvolt = <5000000>;
++		vin-supply = <&reg_vcc5v>;
++		enable-active-high;
++		status = "okay";
++	};
++
++	/*
++	 * SSV6558 WiFi+BT combo chip power sequencing.
++	 * PG18 controls the combined WLAN/BT enable line.
++	 * WiFi driver support is planned for a future phase.
++	 */
++	wifi_pwrseq: wifi-pwrseq {
++		compatible = "mmc-pwrseq-simple";
++		clocks = <&rtc 1>;
++		clock-names = "osc32k-out";
++		reset-gpios = <&pio 6 18 GPIO_ACTIVE_LOW>; /* PG18 WLAN+BT enable */
++		post-power-on-delay-ms = <200>;
++	};
++};
++
++&cpu0 {
++	cpu-supply = <&reg_dcdc2>;
++	status = "okay";
++};
++
++&de {
++	status = "okay";
++};
++
++/* Two physical USB-A ports on the board */
++&ehci0 {
++	status = "okay";
++};
++
++&ehci1 {
++	status = "okay";
++};
++
++&hdmi {
++	hvcc-supply = <&reg_aldo1>;
++	status = "okay";
++};
++
++&hdmi_out {
++	hdmi_out_con: endpoint {
++		remote-endpoint = <&hdmi_con_in>;
++	};
++};
++
++&gpu {
++	mali-supply = <&reg_dcdc1>;
++	status = "okay";
++};
++
++&emac1 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&rmii_pins>;
++	phy-mode = "rmii";
++	phy-handle = <&rmii_phy>;
++	allwinner,use-internal-phy;
++	status = "okay";
++};
++
++&mdio1 {
++	rmii_phy: ethernet-phy@0 {
++		compatible = "ethernet-phy-ieee802.3-c22";
++		reg = <0>;
++	};
++};
++
++/* SD card slot */
++&mmc0 {
++	vmmc-supply = <&reg_dldo1>;
++	broken-cd;
++	bus-width = <4>;
++	status = "okay";
++};
++
++/* SSV6558 WiFi via SDIO (PG0-PG5) */
++&mmc1 {
++	vmmc-supply = <&reg_dldo1>;
++	vqmmc-supply = <&reg_aldo1>;
++	mmc-pwrseq = <&wifi_pwrseq>;
++	bus-width = <4>;
++	non-removable;
++	cap-sd-highspeed;
++	cap-sdio-irq;
++	keep-power-in-suspend;
++	status = "okay";
++	/* SSV6558 enumerated by SDIO vendor/device ID — no child node required */
++};
++
++/* eMMC (Samsung KMQ820013M, 16 GB) on SDC2 (PC1, PC5-PC16) */
++&mmc2 {
++	vmmc-supply = <&reg_dldo1>;
++	bus-width = <8>;
++	non-removable;
++	cap-mmc-hw-reset;
++	status = "okay";
++};
++
++/* Two physical USB-A ports on the board */
++&ohci0 {
++	status = "okay";
++};
++
++&ohci1 {
++	status = "okay";
++};
++
++&r_i2c {
++	status = "okay";
++
++	/* AXP313A (= AXP1530) PMIC — I2C5 (r_i2c), address 0x36 */
++	axp313a: pmic@36 {
++		compatible = "x-powers,axp313a";
++		reg = <0x36>;
++		wakeup-source;
++		vin1-supply = <&reg_vcc5v>;
++		vin2-supply = <&reg_vcc5v>;
++		vin3-supply = <&reg_vcc5v>;
++
++		regulators {
++			reg_dcdc1: dcdc1 {
++				regulator-always-on;
++				regulator-min-microvolt = <810000>;
++				regulator-max-microvolt = <1160000>;
++				regulator-name = "vdd-gpu";
++			};
++
++			reg_dcdc2: dcdc2 {
++				regulator-always-on;
++				regulator-min-microvolt = <810000>;
++				regulator-max-microvolt = <1160000>;
++				regulator-name = "vdd-cpu";
++			};
++
++			reg_dcdc3: dcdc3 {
++				regulator-always-on;
++				regulator-min-microvolt = <1200000>;
++				regulator-max-microvolt = <1200000>;
++				regulator-name = "vdd-dram";
++			};
++
++			reg_aldo1: aldo1 {
++				regulator-always-on;
++				regulator-min-microvolt = <1800000>;
++				regulator-max-microvolt = <1800000>;
++				regulator-name = "vcc1v8";
++			};
++
++			reg_dldo1: dldo1 {
++				regulator-always-on;
++				regulator-min-microvolt = <3300000>;
++				regulator-max-microvolt = <3300000>;
++				regulator-name = "vcc3v3";
++			};
++		};
++	};
++};
++
++/* UART0 console — PH0 (TX) / PH1 (RX), 115200 bps */
++&uart0 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&uart0_ph_pins>;
++	status = "okay";
++};
++
++/* UART1 — PG6/PG7 (TX/RX) + PG8/PG9 (RTS/CTS) — SSV6558 BT (future) */
++&uart1 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&uart1_pins>, <&uart1_rts_cts_pins>;
++	uart-has-rtscts;
++	status = "okay";
++};
++
++&usbotg {
++	dr_mode = "peripheral";
++	status = "okay";
++};
++
++&usbphy {
++	usb1_vbus-supply = <&reg_usb1_vbus>;
++	status = "okay";
++};
++
++/* IR receiver on PH10 */
++&ir {
++	linux,rc-map-name = "rc-beelink-gs1";
++	status = "okay";
++};
++
++&codec {
++	allwinner,audio-routing =
++		"Line Out", "LINEOUT";
++	status = "okay";
++};
++
++&ahub_dam_plat {
++	status = "okay";
++};
++
++&ahub1_plat {
++	status = "okay";
++};
++
++&ahub1_mach {
++	status = "okay";
++};
+
+--
+Armbian
+
